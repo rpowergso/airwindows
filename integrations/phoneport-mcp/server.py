@@ -76,13 +76,31 @@ def check_args(name, args):
 
 class Phone:
     def __init__(self, executable):
-        self.executable = str(executable)
+        self.executable = executable
         self.observation = None
         self.next_id = 0
 
+    def find_iosctl(self):
+        if self.executable:
+            return str(self.executable)
+        powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+        probe = "$p = Get-Process -Name PhonePort,AirWindowsNative,AirWindows -ErrorAction SilentlyContinue; $p | ForEach-Object { $_.Path }"
+        try:
+            result = subprocess.run([str(powershell), "-NoProfile", "-NonInteractive", "-Command", probe],
+                                    capture_output=True, text=True, timeout=5,
+                                    creationflags=subprocess.CREATE_NO_WINDOW)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise BridgeError("Could not inspect running receivers. Pass --iosctl to configure the helper directly.") from exc
+        for path in result.stdout.splitlines():
+            helper = Path(path.strip()).with_name("iosctl.exe") if path.strip() else None
+            if helper and helper.is_file():
+                self.executable = helper
+                return str(helper)
+        raise BridgeError("Start AirWindows or PhonePort in the same Windows login, or configure --iosctl with its full path.")
+
     def run(self, *args):
         try:
-            result = subprocess.run([self.executable, *args], capture_output=True,
+            result = subprocess.run([self.find_iosctl(), *args], capture_output=True,
                                     text=True, encoding="utf-8-sig", errors="replace", timeout=15,
                                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         except subprocess.TimeoutExpired as exc:
@@ -199,11 +217,14 @@ def dispatch(phone, request):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--iosctl", default=shutil.which("iosctl.exe"), help="Path to the receiver's iosctl.exe")
+    parser.add_argument("--iosctl", default=os.environ.get("PHONEPORT_IOSCTL") or shutil.which("iosctl.exe"),
+                        help="Path to the receiver's iosctl.exe")
     args = parser.parse_args()
-    if os.name != "nt" or not args.iosctl or not Path(args.iosctl).is_file():
-        parser.error("Run in interactive Windows and pass --iosctl with the installed iosctl.exe path.")
-    phone = Phone(Path(args.iosctl).resolve())
+    if os.name != "nt":
+        parser.error("Run the PhonePort plugin in an interactive Windows session.")
+    if args.iosctl and not Path(args.iosctl).is_file():
+        parser.error("--iosctl must point to the installed iosctl.exe.")
+    phone = Phone(Path(args.iosctl).resolve() if args.iosctl else None)
     for line in sys.stdin.buffer:
         request_id = None
         try:
