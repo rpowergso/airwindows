@@ -1,0 +1,10 @@
+{
+  "name": "phoneport",
+  "version": "0.1.0",
+  "description": "See and control a nearby iPhone through AirWindows or PhonePort on Windows.",
+  "mcpServers": "./mcp.json",
+  "interface": {
+    "displayName": "PhonePort",
+    "shortDescription": "Control a mirrored iPhone from Windows."
+  }
+}
