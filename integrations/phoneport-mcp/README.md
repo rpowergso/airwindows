@@ -10,7 +10,11 @@ Added on 2026-11-15 in this fork under GPL-3.0-or-later. See the repository's [l
 2. On the iPhone, open Control Center, tap **Screen Mirroring**, and choose your PC. Turn on **Settings → Accessibility → Touch → AssistiveTouch**.
 3. In AirWindows, click **Pair Bluetooth**, pair from the iPhone's main **Settings → Bluetooth** page, then click the AirWindows phone button and select the iPhone. The green dot means the mirrored phone has a selected Bluetooth connection. With the phone unlocked, click a visible Calculator key inside the mirrored image to verify that the phone actually receives input. If the window's Home button fails, [assign AssistiveTouch Button 2 to Home](../../app/NATIVE-CONTROL.md#home-and-scrolling).
 
-## Register with Codex on the Windows laptop
+## Install the PhonePort desktop plugin
+
+In PowerShell on the Windows laptop, run `py -3 .\install.py` from this directory. The installer copies the plugin to your local ChatGPT marketplace and preserves the existing marketplace entries. Restart ChatGPT, find **PhonePort** under your local source in **Plugins**, then click **Install**. Start a new local Codex session to use it. When AirWindows is open, the plugin finds the helper next to the running receiver. If needed, set the path explicitly with `py -3 .\install.py --iosctl 'C:\path\to\iosctl.exe'`.
+
+## Register only the MCP server
 
 Save `server.py` locally. In the same interactive Windows login that opened AirWindows, run the following in PowerShell, replacing both paths. Set `$python` to the full path to an installed `python.exe` if the command cannot resolve it.
 
